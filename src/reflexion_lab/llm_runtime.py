@@ -94,12 +94,12 @@ def _extract_json(text: str) -> dict:
 def classify_failure_mode(
     predicted: str,
     gold: str,
-    judge: JudgeResult,
+    reason: str,
 ) -> str:
     """
     Phân loại lỗi thành 1 trong 5 failure mode dựa trên reason + answer text.
     """
-    reason_lower = judge.reason.lower()
+    reason_lower = reason.lower()
     pred_lower = normalize_answer(predicted)
     gold_lower = normalize_answer(gold)
 

@@ -45,7 +45,7 @@ def main(
     out_dir: str = typer.Option("outputs/sample_run", help="Thư mục lưu kết quả"),
     reflexion_attempts: int = typer.Option(3, help="Số lần retry tối đa của ReflexionAgent"),
     mode: str = typer.Option("real", help="'real' dùng Ollama, 'mock' dùng mock_runtime"),
-    model: str = typer.Option("llama3.1:8b", help="Ollama model tag"),
+    model: str = typer.Option("llama3.2:1b", help="Ollama model tag"),
     limit: Optional[int] = typer.Option(100, help="Số example tối đa (None = toàn bộ)"),
 ) -> None:
     """Chạy benchmark ReAct vs Reflexion và lưu report.json + report.md."""

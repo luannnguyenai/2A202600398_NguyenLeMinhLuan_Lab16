@@ -8,4 +8,6 @@ env/
 .env
 .pytest_cache/
 outputs/
+data/*.json
+!data/hotpot_mini.json
 .DS_Store
