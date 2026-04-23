@@ -1,27 +1,53 @@
+"""
+src/reflexion_lab/schemas.py
+-----------------------------
+Định nghĩa tất cả Pydantic model dùng trong toàn bộ pipeline.
+"""
 from __future__ import annotations
+
 from typing import Literal, Optional, TypedDict
+
 from pydantic import BaseModel, Field
 
+
 class ContextChunk(BaseModel):
+    """Một đoạn văn bản context với tiêu đề và nội dung."""
+
     title: str
     text: str
 
+
 class QAExample(BaseModel):
+    """Một câu hỏi trong benchmark dataset."""
+
     qid: str
     difficulty: Literal["easy", "medium", "hard"]
     question: str
     gold_answer: str
     context: list[ContextChunk]
 
+
 class JudgeResult(BaseModel):
-    # TODO: Học viên định nghĩa các trường cần thiết cho kết quả đánh giá (score, reason, ...)
-    pass
+    """Kết quả đánh giá từ Evaluator Agent."""
+
+    score: Literal[0, 1]
+    reason: str
+    missing_evidence: list[str] = Field(default_factory=list)
+    spurious_claims: list[str] = Field(default_factory=list)
+
 
 class ReflectionEntry(BaseModel):
-    # TODO: Học viên định nghĩa các trường cần thiết cho một mục reflection (attempt_id, lesson, strategy, ...)
-    pass
+    """Một mục reflection được tạo bởi Reflector Agent sau mỗi lần sai."""
+
+    attempt_id: int
+    failure_reason: str
+    lesson: str
+    next_strategy: str
+
 
 class AttemptTrace(BaseModel):
+    """Trace chi tiết của một lần thử (attempt) trong vòng lặp agent."""
+
     attempt_id: int
     answer: str
     score: int
@@ -30,7 +56,10 @@ class AttemptTrace(BaseModel):
     token_estimate: int = 0
     latency_ms: int = 0
 
+
 class RunRecord(BaseModel):
+    """Toàn bộ kết quả chạy của 1 example với 1 agent type."""
+
     qid: str
     question: str
     gold_answer: str
@@ -40,11 +69,21 @@ class RunRecord(BaseModel):
     attempts: int
     token_estimate: int
     latency_ms: int
-    failure_mode: Literal["none", "entity_drift", "incomplete_multi_hop", "wrong_final_answer", "looping", "reflection_overfit"]
+    failure_mode: Literal[
+        "none",
+        "entity_drift",
+        "incomplete_multi_hop",
+        "wrong_final_answer",
+        "looping",
+        "reflection_overfit",
+    ]
     reflections: list[ReflectionEntry] = Field(default_factory=list)
     traces: list[AttemptTrace] = Field(default_factory=list)
 
+
 class ReportPayload(BaseModel):
+    """Payload hoàn chỉnh của report.json — 6 key bắt buộc."""
+
     meta: dict
     summary: dict
     failure_modes: dict
@@ -52,7 +91,10 @@ class ReportPayload(BaseModel):
     extensions: list[str]
     discussion: str
 
+
 class ReflexionState(TypedDict):
+    """State dùng cho langgraph hoặc custom loop (tuỳ chọn)."""
+
     question: str
     context: list[str]
     trajectory: list[str]

@@ -39,3 +39,63 @@ python autograde.py --report-path outputs/sample_run/report.json
 - `src/reflexion_lab/reporting.py`: Logic xuất báo cáo benchmark.
 - `run_benchmark.py`: Script chính để chạy đánh giá.
 - `autograde.py`: Công cụ hỗ trợ chấm điểm nhanh dựa trên report.
+- `src/reflexion_lab/llm_runtime.py`: Runtime thật dùng Ollama (OllamaClient + actor/evaluator/reflector).
+- `scripts/prepare_hotpotqa.py`: Script tải và chuyển đổi HotpotQA dev-distractor.
+
+---
+
+## 5. How to Run REAL Benchmark (Ollama + HotpotQA)
+
+### Bước 1 — Cài đặt & khởi động Ollama
+
+```bash
+# Cài Ollama (macOS / Linux)
+# https://ollama.com/download
+
+# Khởi động Ollama server (để chạy ngầm)
+ollama serve &
+
+# Tải model Llama 3.1 8B (~4.7GB, chạy 1 lần)
+ollama pull llama3.1:8b
+```
+
+### Bước 2 — Tải & chuẩn bị HotpotQA dataset
+
+```bash
+# Tải hotpot_dev_distractor_v1.json (~47MB) và chọn 120 mẫu (seed=42)
+python scripts/prepare_hotpotqa.py --n 120 --seed 42 --out data/hotpot_real_120.json
+```
+
+### Bước 3 — Chạy benchmark thật
+
+```bash
+# Chạy 100 mẫu với cả ReAct và Reflexion (llama3.1:8b)
+python run_benchmark.py \
+  --dataset data/hotpot_real_120.json \
+  --out-dir outputs/real_run \
+  --mode real \
+  --model llama3.1:8b \
+  --limit 100
+
+# Hoặc mock mode để test nhanh (không cần Ollama)
+python run_benchmark.py --dataset data/hotpot_mini.json --out-dir outputs/sample_run --mode mock
+```
+
+### Bước 4 — Chấm điểm tự động
+
+```bash
+python autograde.py --report-path outputs/real_run/report.json
+# Expected: Auto-grade total: >= 95/100
+```
+
+---
+
+## 6. Troubleshoot Ollama
+
+| Vấn đề | Giải pháp |
+|---|---|
+| `connection refused` port 11434 | Chạy `ollama serve` trước khi benchmark |
+| `model not found` | Chạy `ollama pull llama3.1:8b` để tải model |
+| OOM / crash trên 16GB RAM | Thử `ollama pull llama3.2:3b` (nhỏ hơn) và thêm `--model llama3.2:3b` |
+| Timeout quá 180s | Tăng `timeout` trong `OllamaClient.__init__` lên 300 |
+| Port conflict | `lsof -i :11434` để kiểm tra, hoặc `OLLAMA_HOST=0.0.0.0:11435 ollama serve` rồi cập nhật `host` trong `OllamaClient` |
